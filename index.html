@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daily Task & Project Planner - UAS</title>
+    <style>
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            margin: 0;
+            padding: 20px;
+            background-color: #ffcbd9; 
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            color: #333;
+            box-sizing: border-box;
+        }
+        .container { 
+            background: white; 
+            padding: 30px; 
+            border-radius: 12px; 
+            box-shadow: 0px 10px 25px rgba(0,0,0,0.1); 
+            max-width: 500px;
+            width: 100%;
+        }
+        
+        /* STYLE: Welcome Box dengan Vibe Energik */
+        .welcome-box {
+            background-color: #ffeef2;
+            padding: 12px;
+            border-radius: 15px;
+            font-size: 16px;
+            font-weight: 500;
+            color: #444;
+            margin-bottom: 25px;
+            border: 2px dashed #ff527b;
+            display: inline-block;
+            width: 100%;
+            box-sizing: border-box;
+            text-align: center;
+        }
+        .welcome-box span {
+            color: #ff527b;
+            font-weight: bold;
+        }
+
+        .header-area {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+        .icon-header {
+            font-size: 45px;
+            color: #ff527b; 
+            margin-bottom: 5px;
+        }
+        h2 {
+            margin: 0 0 10px 0;
+            color: #2d3436;
+            font-size: 24px;
+        }
+        .badge {
+            background-color: #ffeef2;
+            color: #ff527b;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 13px;
+            display: inline-block;
+        }
+        
+        /* TASK PLANNER SECTION */
+        .planner-section {
+            border-top: 2px dashed #ffeef2;
+            padding-top: 20px;
+            text-align: left;
+        }
+        h3 {
+            color: #2d3436;
+            margin-top: 0;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        input[type="text"], input[type="date"] {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ffcbd9;
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-family: inherit;
+        }
+        input:focus {
+            outline: none;
+            border-color: #ff527b;
+        }
+        .btn-add {
+            background-color: #ff527b;
+            color: white;
+            padding: 11px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+        .btn-add:hover { background-color: #e03d64; }
+        
+        .task-list {
+            background: #f9f9f9;
+            padding: 10px;
+            border-radius: 8px;
+            max-height: 220px;
+            overflow-y: auto;
+            border-left: 4px solid #ff527b;
+        }
+        .task-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background: white;
+            margin-bottom: 8px;
+            border-radius: 6px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        }
+        .task-item:last-child { margin-bottom: 0; }
+        .task-info .task-name {
+            font-weight: 600;
+            color: #2d3436;
+            font-size: 14px;
+        }
+        .task-info .task-date {
+            font-size: 11px;
+            color: #ff527b;
+            margin-top: 2px;
+        }
+        .btn-delete {
+            background: #ffeef2;
+            color: #ff527b;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .btn-delete:hover {
+            background: #ffcbd9;
+        }
+
+        #logoutBtn { 
+            background-color: #636e72; 
+            color: white; 
+            padding: 10px; 
+            border: none; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-size: 14px;
+            font-weight: bold;
+            transition: background 0.3s;
+            width: 100%;
+            margin-top: 20px;
+        }
+        #logoutBtn:hover { background-color: #2d3436; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="welcome-box" id="welcomeBox">
+            👋 Hey there, <span id="usernameTarget">Loading...</span>! Let's crush your goals today!✨
+        </div>
+
+        <div class="header-area">
+            <div class="icon-header">🎯</div>
+            <h2>Daily Task & Project Planner</h2>
+            <span class="badge">Sesi Cloud Aktif</span>
+        </div>
+        
+        <div class="planner-section">
+            <h3>📝 Tambah Tugas Baru</h3>
+            <div class="input-group">
+                <input type="text" id="taskInput" placeholder="Nama tugas (contoh: Laporan UAS Cloud)">
+                <input type="date" id="dateInput">
+                <button class="btn-add" id="addTaskBtn">Tambah ke Jadwal</button>
+            </div>
+            
+            <h3>📋 Daftar Rencana Tugas Kamu:</h3>
+            <div class="task-list" id="taskContainer">
+                </div>
+        </div>
+
+        <button id="logoutBtn">Keluar Sistem</button>
+    </div>
+
+    <script>
+    const SUPABASE_URL = "https://avcoiavgfiinryfkqnqc.supabase.co";
+    const SUPABASE_KEY = "sb_publishable_HFocaDjxEwcZEGpcrsqjww_aWgXeAhO";
+
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    let currentUser = null;
+
+    async function checkSession() {
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        
+        if (!session) {
+            alert("Akses ditolak! Kamu harus login terlebih dahulu.");
+            window.location.href = "login.html";
+        } else {
+            currentUser = session.user;
+            
+            // Ambil username dari email
+            const username = currentUser.email.split('@')[0];
+            document.getElementById('usernameTarget').innerText = username;
+            
+            loadTasks(); 
+        }
+    }
+
+    function loadTasks() {
+        const taskContainer = document.getElementById('taskContainer');
+        const userTasks = JSON.parse(localStorage.getItem('tasks_' + currentUser.email)) || [];
+        
+        if (userTasks.length === 0) {
+            taskContainer.innerHTML = `<div style="color: #999; text-align: center; padding: 10px; font-size: 14px;">Belum ada rencana tugas. Yuk tambah sekarang!</div>`;
+            return;
+        }
+        
+        taskContainer.innerHTML = userTasks.map((task, index) => `
+            <div class="task-item">
+                <div class="task-info">
+                    <div class="task-name">📌 ${task.name}</div>
+                    <div class="task-date">📅 Deadline: ${task.date ? task.date : 'Tidak ada'}</div>
+                </div>
+                <button class="btn-delete" onclick="deleteTask(${index})">Selesai</button>
+            </div>
+        `).join('');
+    }
+
+    document.getElementById('addTaskBtn').addEventListener('click', function() {
+        const taskInput = document.getElementById('taskInput');
+        const dateInput = document.getElementById('dateInput');
+        
+        const taskName = taskInput.value.trim();
+        const taskDate = dateInput.value;
+        
+        if (taskName === "") {
+            alert("Nama tugas tidak boleh kosong!");
+            return;
+        }
+        
+        const userTasks = JSON.parse(localStorage.getItem('tasks_' + currentUser.email)) || [];
+        userTasks.unshift({ name: taskName, date: taskDate });
+        localStorage.setItem('tasks_' + currentUser.email, JSON.stringify(userTasks));
+        
+        taskInput.value = "";
+        dateInput.value = "";
+        
+        loadTasks(); 
+    });
+
+    window.deleteTask = function(index) {
+        const userTasks = JSON.parse(localStorage.getItem('tasks_' + currentUser.email)) || [];
+        userTasks.splice(index, 1); 
+        localStorage.setItem('tasks_' + currentUser.email, JSON.stringify(userTasks));
+        loadTasks(); 
+    };
+
+    document.getElementById('logoutBtn').addEventListener('click', async function() {
+        await supabaseClient.auth.signOut();
+        alert("Kamu telah logout dengan aman.");
+        window.location.href = "login.html";
+    });
+
+    checkSession();
+    </script>
+</body>
+</html>
